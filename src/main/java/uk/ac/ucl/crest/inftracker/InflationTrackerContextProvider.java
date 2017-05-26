@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
+import com.atlassian.jira.bc.issue.search.SearchService.ParseResult;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.search.SearchException;
@@ -16,7 +17,6 @@ import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContex
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.bean.PagerFilter;
-import com.atlassian.query.Query;
 
 public class InflationTrackerContextProvider extends AbstractJiraContextProvider {
 
@@ -25,6 +25,7 @@ public class InflationTrackerContextProvider extends AbstractJiraContextProvider
 	// TODO(cgavidia): We should be able to tune this parameter.
 	private static final Double INFLATION_PENALTY = 0.1;
 	private static final Double INITIAL_REPUTATION = 1.0;
+	private static final String INFLATION_JQL = "reporter=\"%s\" AND priority CHANGED FROM \"Medium\" TO \"Lowest\" ";
 
 	@Override
 	public Map<String, Object> getContextMap(ApplicationUser applicationUser, JiraHelper jiraHelper) {
@@ -42,18 +43,27 @@ public class InflationTrackerContextProvider extends AbstractJiraContextProvider
 		Double reputationScore = 0.8;
 		builder.where().reporter().eq(currentIssue.getReporter().getDisplayName());
 
-		Query query = builder.buildQuery();
 		SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
-		try {
-			SearchResults results = searchService.search(applicationUser, query, PagerFilter.getUnlimitedFilter());
-			List<Issue> inflatedIssues = results.getIssues();
 
+		String jqlQuery = String.format(INFLATION_JQL, currentIssue.getReporter().getDisplayName());
+		ParseResult parseResult = searchService.parseQuery(applicationUser, jqlQuery);
+
+		if (parseResult.isValid()) {
+			try {
+				SearchResults results = searchService.search(applicationUser, parseResult.getQuery(),
+						PagerFilter.getUnlimitedFilter());
+				List<Issue> inflatedIssues = results.getIssues();
+
+				// TODO(cgavidia): Logging to warn temporarly.
+				log.warn("inflatedIssues: " + inflatedIssues.size());
+				reputationScore = Math.max(0.0, INITIAL_REPUTATION - inflatedIssues.size() * INFLATION_PENALTY);
+
+			} catch (SearchException e) {
+				log.warn("Unable to perform JQL search", e);
+			}
+		} else {
 			// TODO(cgavidia): Logging to warn temporarly.
-			log.warn("inflatedIssues: " + inflatedIssues.size());
-			reputationScore = Math.max(0.0, INITIAL_REPUTATION - inflatedIssues.size() * INFLATION_PENALTY);
-
-		} catch (SearchException e) {
-			log.warn("Unable to perform JQL search", e);
+			log.warn("The JQL query built is not valid: " + jqlQuery);
 		}
 
 		return reputationScore;
