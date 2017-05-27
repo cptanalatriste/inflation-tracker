@@ -25,6 +25,9 @@ public class InflationTrackerContextProvider extends AbstractJiraContextProvider
 	// TODO(cgavidia): We should be able to tune this parameter.
 	private static final Double INFLATION_PENALTY = 0.1;
 	private static final Double INITIAL_REPUTATION = 1.0;
+	private static final Double WARNING_THRESHOLD = 0.5;
+	private static final Double OPTIMAL_THRESHOLD = 0.7;
+
 	private static final String INFLATION_JQL = "reporter=\"%s\" AND priority CHANGED FROM \"Medium\" TO \"Lowest\" ";
 
 	@Override
@@ -33,6 +36,9 @@ public class InflationTrackerContextProvider extends AbstractJiraContextProvider
 
 		Issue currentIssue = (Issue) jiraHelper.getContextParams().get("issue");
 		contextMap.put("reputationScore", getReputationScore(applicationUser, currentIssue));
+		contextMap.put("warningThreshold", WARNING_THRESHOLD);
+		contextMap.put("optimalThreshold", OPTIMAL_THRESHOLD);
+
 		return contextMap;
 	}
 
