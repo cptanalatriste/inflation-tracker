@@ -33,7 +33,7 @@ public class JiraIssueDataAccess {
 		this.changeHistoryManager = changeHistoryManager;
 	}
 
-	public List<Issue> getIssuesWithChangedPriorities(ApplicationUser applicationUser, Issue currentIssue,
+	public List<Issue> getResolvedIssuesWithChangedPriorities(ApplicationUser applicationUser, Issue currentIssue,
 			String resolvedStatus) {
 
 		String jqlQuery = String.format(CHANGED_PRIORITY_JQL, currentIssue.getReporter().getDisplayName(),

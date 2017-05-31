@@ -2,11 +2,19 @@
 #set ($percentageScore = $reputationScore * 100)
 #set ($scoreWithFormat = $String.format("%.2f%%", $percentageScore))
 #if ($reputationScore >= $optimalThreshold)
-<span style="font-weight: bold; color: green;">The reporter has a great reputation score! It is $scoreWithFormat.</span>
+<div style="margin: 10px 0px; padding:12px; color: #4F8A10; background-color: #DFF2BF;">
+     The reporter has a great reputation score! It is $scoreWithFormat.
+</div>
 #elseif ($reputationScore < $optimalThreshold and $reputationScore >= $warningThreshold)
-<span style="font-weight: bold; color: blue;">The reporter&apos;s reputation score is $scoreWithFormat</span>
+<div style="margin: 10px 0px; padding:12px; color: #00529B; background-color: #BDE5F8;">
+    The reporter&apos;s reputation score is $scoreWithFormat
+</div>
 #elseif ($reputationScore < $warningThreshold and $reputationScore > 0)
-<span style="font-weight: bold; color: red;">The reporter has a low reputation score! It is $scoreWithFormat.</span>
+<div style="margin: 10px 0px; padding:12px; color: #9F6000; background-color: #FEEFB3;">
+     The reporter has a low reputation score! It is $scoreWithFormat.
+</div>
 #elseif ($reputationScore <= 0)
-<span style="font-weight: bold; color: #ff4500;">The reporter has depleted his reputation score.</span>
+<div style="margin: 10px 0px; padding:12px; color: #D8000C; background-color: #FFBABA;">
+   The reporter has depleted his reputation score.
+</div>
 #end

@@ -27,10 +27,9 @@ public class InflationTrackerService {
 	public Double getReputationScore(ApplicationUser applicationUser, Issue currentIssue, String resolvedStatus,
 			Double initialReputation, Double inflationPenalty) {
 
-		// TODO (cgavidia): This is a sample value for testing
 		Double reputationScore = null;
 
-		List<Issue> changedPriorityIssues = issueDataAccess.getIssuesWithChangedPriorities(applicationUser,
+		List<Issue> changedPriorityIssues = issueDataAccess.getResolvedIssuesWithChangedPriorities(applicationUser,
 				currentIssue, resolvedStatus);
 
 		if (changedPriorityIssues != null) {
@@ -53,8 +52,8 @@ public class InflationTrackerService {
 	}
 
 	private boolean isInflated(Issue issue, String resolvedStatus) {
-		// TODO(cgavidia): This logic should consider that the resolver is
-		// different than the reporter.
+		// TODO(cgavidia): We should also consider the number of reports made in
+		// the past. Maybe
 
 		List<ChangeHistory> changeHistories = this.issueDataAccess.retrieveChangeHistory(issue);
 		log.warn("changeHistories.size() : " + changeHistories.size());
@@ -67,16 +66,22 @@ public class InflationTrackerService {
 			}
 		});
 
-		ApplicationUser resolver = this.issueDataAccess.getIssueResolver(changeHistories, resolvedStatus);
-		String resolverPriority = this.issueDataAccess.getPriorityAssesmentByReporter(changeHistories, resolver);
-		String originalPriority = this.issueDataAccess.getOriginalPriority(changeHistories);
+		ApplicationUser reporter = issue.getReporter();
+		ApplicationUser lastResolver = this.issueDataAccess.getIssueResolver(changeHistories, resolvedStatus);
 
-		// TODO(cgavidia): Logging to warn temporarily.
-		log.warn("originalPriority : " + originalPriority + " resolverPriority : " + resolverPriority);
+		if (reporter != null && lastResolver != null && !reporter.equals(lastResolver)) {
+			String resolverPriority = this.issueDataAccess.getPriorityAssesmentByReporter(changeHistories,
+					lastResolver);
+			String originalPriority = this.issueDataAccess.getOriginalPriority(changeHistories);
 
-		if (originalPriority != null && resolverPriority != null && !originalPriority.equals(resolverPriority)) {
-			return true;
+			// TODO(cgavidia): Logging to warn temporarily.
+			log.warn("originalPriority : " + originalPriority + " resolverPriority : " + resolverPriority);
+
+			if (originalPriority != null && resolverPriority != null && !originalPriority.equals(resolverPriority)) {
+				return true;
+			}
 		}
+
 		return false;
 	}
 
